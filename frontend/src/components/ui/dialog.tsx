@@ -4,6 +4,7 @@ import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Radix Dialog 래퍼: 디자인 토큰/클래스 일관화
 function Dialog({
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {

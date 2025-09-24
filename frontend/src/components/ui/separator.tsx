@@ -3,6 +3,7 @@ import * as SeparatorPrimitive from "@radix-ui/react-separator"
 
 import { cn } from "@/lib/utils"
 
+// 구분선 컴포넌트 (가로/세로)
 function Separator({
   className,
   orientation = "horizontal",

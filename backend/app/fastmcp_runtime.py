@@ -25,11 +25,11 @@ logger = logging.getLogger(__name__)
 
 
 def _normalize_uuid_if_possible(value: str) -> str:
-    """Return 32-hex (no hyphens) canonical UUID string if value looks like a UUID.
+    """UUID처럼 보이는 문자열을 32자리 16진수(hex, 하이픈 제거) 표준 형태로 정규화한다.
 
-    FastMCP's /messages expects `session_id` as 32-hex (UUID(hex=...)).
-    Accept hyphenated or 32-hex input and normalize to 32-hex.
-    Return input unchanged if not a valid UUID.
+    - FastMCP의 /messages는 `session_id`를 32-hex로 기대함.
+    - 하이픈 포함/미포함 모두 허용하고 내부적으로는 32-hex로 통일한다.
+    - 유효한 UUID가 아니면 입력값을 그대로 반환한다.
     """
     if not isinstance(value, str) or not value:
         return value
@@ -52,7 +52,7 @@ def _normalize_uuid_if_possible(value: str) -> str:
 
 
 class MessagesNormalizerASGI:
-    """ASGI wrapper that normalizes `session_id` query param for /messages requests."""
+    """/messages 요청의 쿼리파라미터 중 `session_id` 값을 정규화하는 ASGI 래퍼."""
 
     def __init__(self, app: Any, message_path: str = "/messages") -> None:
         self.app = app
@@ -92,7 +92,9 @@ class MessagesNormalizerASGI:
             scope = dict(scope)
             scope["query_string"] = norm_qs.encode("utf-8")
             try:
-                logger.info("messages.normalize applied path=%s session_id.in=%s", path, sid_in)
+                # path 변수가 정의되지 않아 오류가 나던 부분 수정
+                path_val = scope.get("path", "")
+                logger.info("messages.normalize applied path=%s session_id.in=%s", path_val, sid_in)
             except Exception:
                 pass
 
@@ -115,6 +117,12 @@ def tool_key(server_id: str, tool_name: str) -> str:
 
 
 def register_tool_with_fastmcp(server_id: str, tool_name: str) -> None:
+    """레지스트리에 등록된 서버/툴을 FastMCP 런타임에 등록한다.
+
+    - 글로벌 FastMCP 인스턴스(fastmcp_server)에는 `{server_id}.{tool_name}` 형태로 등록
+    - 서버별 FastMCP 인스턴스에는 `tool_name`으로 등록 (서버 스코프)
+    - 내부 `_tool_fn`은 HTTP 어댑터를 호출하여 결과의 data 필드만 반환
+    """
     servers = registry.list_servers()
     tools = registry.list_tools(server_id)
     if server_id not in servers or tool_name not in tools:
@@ -146,6 +154,7 @@ def register_tool_with_fastmcp(server_id: str, tool_name: str) -> None:
 
 
 def deregister_tool_with_fastmcp(server_id: str, tool_name: str) -> None:
+    """FastMCP 런타임에서 도구 등록을 제거한다(글로벌/서버 스코프 모두)."""
     try:
         fastmcp_server.remove_tool(tool_key(server_id, tool_name))
     except Exception:
@@ -159,7 +168,7 @@ def deregister_tool_with_fastmcp(server_id: str, tool_name: str) -> None:
 
 
 def build_fastmcp_sse_app():
-    # Expose SSE endpoints under /mcp-sdk/{sse|messages} for global (legacy)
+    # 글로벌(레거시) SSE 엔드포인트를 /mcp-sdk/{sse|messages} 아래에 노출
     from fastmcp.server.http import create_sse_app
 
     subapp = create_sse_app(
@@ -169,7 +178,7 @@ def build_fastmcp_sse_app():
         auth=None,
         debug=False,
     )
-    # Optional normalization wrapper
+    # 선택적 정규화 래퍼 적용 (환경변수로 끌 수 있음)
     if os.getenv("MCP_SESSION_NORMALIZE", "1") not in ("0", "false", "False"):
         subapp = MessagesNormalizerASGI(subapp, message_path="/messages")
     return subapp
@@ -192,6 +201,7 @@ def build_fastmcp_sse_app_for(server_id: str):
 
 
 def ensure_server_mounted(server_id: str) -> None:
+    """FastAPI 앱에 서버 스코프의 FastMCP SSE 서브앱을 동적으로 마운트한다."""
     if _app_ref is None:
         return
     if server_id in _mounted_servers:

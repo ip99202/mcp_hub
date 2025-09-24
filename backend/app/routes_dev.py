@@ -12,6 +12,7 @@ router = APIRouter(prefix="/_dev", tags=["dev"])
 
 @router.post("/seed/httpbin")
 async def seed_httpbin() -> dict:
+    """httpbin 서버/툴 샘플 등록."""
     registry.upsert_server(
         "httpbin",
         ServerConfig(
@@ -56,6 +57,7 @@ async def seed_httpbin() -> dict:
 
 @router.post("/seed/ipify")
 async def seed_ipify() -> dict:
+    """ipify 서버/툴 샘플 등록."""
     registry.upsert_server(
         "ipify",
         ServerConfig(
@@ -86,6 +88,7 @@ async def seed_ipify() -> dict:
 
 @router.post("/test/httpbin/{tool}")
 async def test_httpbin(tool: str, args: dict) -> dict:
+    """등록된 httpbin 툴을 직접 호출하여 결과 반환(개발용)."""
     server = registry.list_servers()["httpbin"]
     binding = registry.list_tools("httpbin")[tool]
     result = await call_via_binding(server, binding, args)

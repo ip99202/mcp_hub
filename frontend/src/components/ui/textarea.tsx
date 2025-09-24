@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// 멀티라인 텍스트 입력 컴포넌트
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea

@@ -4,6 +4,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// 테이블 컴포넌트: 컨테이너/헤더/바디/행/셀 등 세분화
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div

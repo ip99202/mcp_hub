@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// 카드 레이아웃 컴포넌트 모음
 function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

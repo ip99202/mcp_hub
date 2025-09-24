@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 
 function App() {
-  // Server form state
+  // 서버 생성/수정 폼 상태
   const [serverName, setServerName] = useState('Weather API')
   const [serverBaseUrl, setServerBaseUrl] = useState('https://api.weather.com/v1')
   const [authType, setAuthType] = useState('none')
@@ -19,7 +19,7 @@ function App() {
   const [defaultHeaders, setDefaultHeaders] = useState('{"Accept": "application/json"}')
   const [serverActive, setServerActive] = useState(true)
 
-  // Tool form state
+  // 툴 생성/수정 폼 상태
   const [selectedServerId, setSelectedServerId] = useState('')
   const [toolName, setToolName] = useState('get_forecast')
   const [toolDescription, setToolDescription] = useState('국가/도시 기준 단기 예보 조회')
@@ -34,12 +34,12 @@ function App() {
   const [responsePick, setResponsePick] = useState('$.forecast.daily')
   const [toolActive, setToolActive] = useState(true)
   
-  // Edit states
+  // 수정 모드 상태 (편집 대상 식별자)
   const [editingServerId, setEditingServerId] = useState('')
   const [editingToolName, setEditingToolName] = useState('')
   const [editingToolServerId, setEditingToolServerId] = useState('')
 
-  // Legacy state for compatibility
+  // 레거시 호환(간단 호출) 상태
   const [serverId, setServerId] = useState('demo')
   const [baseUrl, setBaseUrl] = useState('https://api.ipify.org')
   const [args, setArgs] = useState('{"format":"json"}')
@@ -62,21 +62,33 @@ function App() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight })
   }, [log, testLog])
 
+  /**
+   * JSON POST 헬퍼
+   */
   const post = async (path: string, body: any) => {
     const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     return res.json()
   }
 
+  /**
+   * DELETE 헬퍼
+   */
   const del = async (path: string) => {
     const res = await fetch(path, { method: 'DELETE' })
     return res.json()
   }
 
+  /**
+   * GET→JSON 헬퍼
+   */
   const getJson = async (path: string) => {
     const res = await fetch(path)
     return res.json()
   }
 
+  /**
+   * 상단 요약 카드에 표시할 통계 갱신
+   */
   const refreshStats = async () => {
     try {
       const data = await getJson('/api/stats')
@@ -91,6 +103,9 @@ function App() {
     }
   }
 
+  /**
+   * 서버 생성/수정 요청
+   */
   const upsertServer = async () => {
     let auth: any = undefined
     let headers: any = undefined
@@ -119,6 +134,9 @@ function App() {
     await refreshStats()
   }
 
+  /**
+   * 툴 생성/수정 요청
+   */
   const upsertTool = async () => {
     let inputSchema: any = undefined
     let pathMap: any = undefined
@@ -172,6 +190,9 @@ function App() {
     await refreshStats()
   }
 
+  /**
+   * 레거시 SSE 호출 데모 (fetch 스트림으로 수신)
+   */
   const callSSE = async () => {
     setLog((l) => [...l, `calling /mcp/${serverId}/${toolName} ...`])
     const es = new EventSource(`/mcp/${serverId}/${toolName}`, { withCredentials: false })
@@ -203,18 +224,24 @@ function App() {
   const activeServers = stats.activeServers ?? Object.values(servers).filter((s: any) => s.active).length
   const activeTools = stats.activeTools ?? Object.values(tools).filter((t: any) => t.active).length
 
+  /**
+   * 서버 목록 갱신
+   */
   const refreshServers = async () => {
     const data = await getJson('/api/servers')
     setServers(data || {})
   }
 
+  /**
+   * 툴 목록 갱신 (특정 서버 또는 전체)
+   */
   const refreshTools = async (targetServerId?: string) => {
     try {
       const serverToUse = targetServerId || selectedServerId
       console.log('refreshTools:', { targetServerId, selectedServerId, serverToUse, serversCount: Object.keys(servers).length })
       
       if (!serverToUse || serverToUse === "__all__") {
-        // 서버가 선택되지 않은 경우 모든 서버의 툴을 가져오기
+        // 서버가 선택되지 않은 경우 모든 서버의 툴을 취합
         console.log('Loading all tools from servers:', Object.keys(servers))
         const allTools: any = {}
         const serverEntries = Object.entries(servers)
@@ -245,6 +272,9 @@ function App() {
     }
   }
 
+  /**
+   * 좌측 상단 셀렉트에서 서버 선택 시 기본 URL/툴 목록 동기화
+   */
   const selectServer = async (id: string) => {
     setServerId(id)
     const cfg = await getJson(`/api/servers/${id}`)
@@ -252,6 +282,9 @@ function App() {
     await refreshTools()
   }
 
+  /**
+   * 서버 삭제
+   */
   const deleteServer = async (id: string) => {
     const ok = window.confirm(`서버 "${id}"를 삭제하시겠습니까?`)
     if (!ok) return
@@ -261,6 +294,9 @@ function App() {
     await refreshStats()
   }
 
+  /**
+   * 툴 삭제
+   */
   const deleteTool = async (name: string, toolServerId?: string) => {
     const serverToUse = toolServerId || selectedServerId
     if (!serverToUse) return
@@ -271,6 +307,9 @@ function App() {
     await refreshStats()
   }
 
+  /**
+   * 서버 편집 모드로 폼 채우기
+   */
   const editServer = async (id: string) => {
     const cfg = await getJson(`/api/servers/${id}`)
     setEditingServerId(id)
@@ -284,6 +323,9 @@ function App() {
     setServerDialogOpen(true)
   }
 
+  /**
+   * 툴 편집 모드로 폼 채우기
+   */
   const editTool = async (toolName: string, serverId: string) => {
     const binding = await getJson(`/api/tools/${serverId}/${toolName}`)
     setEditingToolName(toolName)
@@ -304,6 +346,9 @@ function App() {
     setToolDialogOpen(true)
   }
 
+  /**
+   * 선택한 툴을 서버에서 실제 호출하여 SSE 로그를 표시
+   */
   const testTool = async (toolName: string, serverId: string) => {
     if (isTesting) return
     setIsTesting(true)
@@ -349,6 +394,9 @@ function App() {
     }
   }
 
+  /**
+   * 폼 상태 초기화 (편집/선택 해제)
+   */
   const clearForm = () => {
     setEditingServerId('')
     setEditingToolName('')
@@ -376,7 +424,7 @@ function App() {
   }
 
 
-  // LocalStorage load
+  // LocalStorage에서 초기값 로드
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('mcp_hub_ui') || '{}')
@@ -388,7 +436,7 @@ function App() {
     } catch {}
   }, [])
 
-  // LocalStorage save
+  // LocalStorage에 상태 저장
   useEffect(() => {
     const payload = { serverId, baseUrl, toolName, args, responsePick }
     localStorage.setItem('mcp_hub_ui', JSON.stringify(payload))
@@ -402,7 +450,7 @@ function App() {
 
   useEffect(() => {
     // 서버 목록이 로드되면 툴 목록도 즉시 동기화하여
-    // 상단 Summary의 Tools 카운트가 0으로 보이지 않도록 한다
+    // 상단 Summary의 Tools 카운트가 0으로 보이지 않도록 함
     if (Object.keys(servers).length > 0) {
       refreshTools(selectedServerId || undefined)
     } else {

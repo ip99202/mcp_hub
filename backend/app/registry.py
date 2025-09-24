@@ -6,6 +6,11 @@ from .models import ServerConfig, ToolBinding
 
 
 class InMemoryRegistry:
+    """서버/툴 바인딩 정보를 메모리에 저장하는 간단한 레지스트리.
+
+    - 프로세스 메모리에만 존재하므로 앱 재시작 시 초기화됨
+    - CRUD 및 간단 통계(stat) 제공
+    """
     def __init__(self) -> None:
         self._servers: Dict[str, ServerConfig] = {}
         self._tools_by_server: Dict[str, Dict[str, ToolBinding]] = {}
@@ -35,6 +40,7 @@ class InMemoryRegistry:
 
     # Introspection
     def stats(self) -> Dict[str, int]:
+        """등록된 서버/툴의 개수를 요약해 반환한다."""
         num_servers = len(self._servers)
         num_tools = sum(len(tools) for tools in self._tools_by_server.values())
         return {"servers": num_servers, "tools": num_tools}

@@ -6,6 +6,7 @@ import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Radix Select 래퍼: 트리거/콘텐츠/아이템 등 서브컴포넌트 포함
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {

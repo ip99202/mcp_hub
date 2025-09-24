@@ -77,6 +77,7 @@ async def mcp_base_post(server_id: str, request: Request):
 
 @router.post("/{server_id}/{tool_name}")
 async def call_tool(server_id: str, tool_name: str, req: CallRequest) -> EventSourceResponse:
+    """지정 서버의 지정 툴을 호출하여 SSE로 결과를 스트리밍한다."""
     servers = registry.list_servers()
     if server_id not in servers:
         raise HTTPException(status_code=404, detail="server not found")
@@ -95,7 +96,7 @@ async def call_tool(server_id: str, tool_name: str, req: CallRequest) -> EventSo
     async def event_stream() -> AsyncGenerator[dict, None]:
         yield {"event": "tool_call.started", "data": json.dumps({"server": server_id, "tool": tool_name})}
         try:
-            # Validate args with JSON Schema if provided
+            # JSON Schema로 인자 유효성 검사(가능한 경우)
             try:
                 from jsonschema import validate  # type: ignore
                 if tool.inputSchema:
@@ -105,7 +106,7 @@ async def call_tool(server_id: str, tool_name: str, req: CallRequest) -> EventSo
 
             data_payload = None
             status_code = 200
-            # Prefer FastMCP runtime if tool is registered
+            # FastMCP 런타임에 등록된 경우 이를 우선 사용
             try:
                 tr = await fastmcp_server._call_tool(tool_key(server_id, tool_name), req.args)
                 r = tr.to_mcp_result()
@@ -113,7 +114,7 @@ async def call_tool(server_id: str, tool_name: str, req: CallRequest) -> EventSo
                     # (content, structured)
                     data_payload = r[1]
                 else:
-                    # list[ContentBlock] → fallback serialize to text lines
+                    # list[ContentBlock] → 텍스트로 직렬화하여 폴백
                     def _cb_to_str(cb: Any) -> str:
                         try:
                             # Pydantic model
@@ -122,7 +123,7 @@ async def call_tool(server_id: str, tool_name: str, req: CallRequest) -> EventSo
                             return str(cb)
                     data_payload = {"content": [ _cb_to_str(cb) for cb in r ]}
             except Exception:
-                # Fallback to direct HTTP adapter
+                # FastMCP 실패 시 HTTP 어댑터로 직접 호출
                 result = await call_via_binding(server, tool, req.args)
                 data_payload = result.get("data")
                 status_code = result.get("status_code", 200)
@@ -144,6 +145,7 @@ class ToolCall(BaseModel):
 
 @router.post("/{server_id}/tools/call")
 async def tools_call(server_id: str, body: ToolCall) -> EventSourceResponse:
+    """MCP 표준 스타일의 tools.call 엔드포인트(서버 스코프)."""
     call_args = body.args or {}
     return await call_tool(server_id, body.name, CallRequest(args=call_args))
 

@@ -153,6 +153,15 @@ async def call_via_binding(server: ServerConfig, tool: ToolBinding, args: Dict[s
 - `register_tool_with_fastmcp(serverId, toolName)` 호출 시 내부 어댑터 함수로 FastMCP 툴 등록
 - 서버별 서브앱을 `/mcp-servers/{serverId}` 경로에 마운트(SSE)
 
+세션/메시지 경로 및 세션 ID 정규화
+- FastMCP 서브앱은 `GET /sse`(세션 생성)와 `POST /messages`(메시지 전송)를 제공한다.
+- hub는 ASGI 래퍼(`MessagesNormalizerASGI`)를 서브앱에 적용하여, 쿼리의 `session_id`를 항상 "32자 hex(하이픈 없음)"으로 정규화한다. 이는 FastMCP가 내부적으로 `UUID(hex=...)`를 사용하기 때문.
+- 기능 플래그: `MCP_SESSION_NORMALIZE`(기본값 `1`). `0|false`로 비활성화 가능.
+
+주의: 인메모리 세션과 워커
+- FastMCP의 SSE 세션 저장소는 인메모리이며 프로세스(워커) 간 공유되지 않는다. Uvicorn 멀티 워커 환경에서 `GET /sse`와 `POST /messages`가 서로 다른 워커로 라우팅되면 404가 발생할 수 있다.
+- 운영 권장: `UVICORN_WORKERS=1`(단일 워커)로 구동하거나, 외부 공유 스토어(예: Redis) 기반 세션 매니저를 도입/확장.
+
 등록 흐름:
 ```python
 async def _tool_fn(args):
@@ -313,6 +322,10 @@ Body 매핑은 최상위 키들을 그대로 JSON 바디에 투영하며, `nutri
 - JSONPath 선택: 다중 매치 시 배열 반환, 파서 오류 시 전체 JSON 반환
 - 활성 제어: `server.active==False` 또는 `tool.active==False` → 403
 
+세션/메시지 관련 유의사항
+- `session_id` 정규화: 허브는 하이픈 유무와 무관하게 수신된 값을 UUID로 파싱 후 32자 hex로 통일한다. 클라이언트는 SSE가 내려준 endpoint의 `session_id`를 그대로 사용하는 것을 권장.
+- 404(`Could not find session`) 발생 조건: (a) 존재하지 않는/만료된 세션, (b) 멀티 워커로 인해 세션이 다른 워커에만 존재하는 경우. 전자의 경우 SSE 재초기화, 후자의 경우 단일 워커 권장.
+
 ---
 
 ## 12) 운영/확장 포인트
@@ -322,6 +335,11 @@ Body 매핑은 최상위 키들을 그대로 JSON 바디에 투영하며, `nutri
 - 전송: 현재 SSE만. 추후 stdio/Streamable HTTP 추가 가능
 - 자동 임포트: OpenAPI→툴 자동 생성(향후)
 - 리밋/재시도/레이트리밋: `http_adapter` 레벨에 미들웨어성 확장 가능
+
+세션과 워커 구성
+- 단일 워커 권장: `UVICORN_WORKERS=1` (멀티 워커 시 세션 분산으로 404 가능)
+- 세션 표준화 플래그: `MCP_SESSION_NORMALIZE=1`(기본). 필요 시 끌 수 있음
+- 장기적으로는 외부 세션 스토어(예: Redis) 연동 또는 FastMCP upstream에 공유 스토어 지원 기여 고려
 
 ---
 

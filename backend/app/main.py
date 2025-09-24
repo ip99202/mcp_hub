@@ -28,7 +28,7 @@ from .fastmcp_runtime import register_tool_with_fastmcp
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Auto-register default server/tools on startup (migrated from on_event)
+    # 서버 시작 시 기본 서버/툴을 자동 등록한다 (기존 on_event에서 이전).
     try:
         server_id = "fakestore_api"
         ensure_server_mounted(server_id)
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
                 ),
             )
 
-        # Helper to upsert and register a tool only if missing
+        # 이미 존재하지 않을 때만 upsert + FastMCP 등록하는 헬퍼
         def ensure_tool(binding: ToolBinding) -> None:
             tools_local = registry.list_tools(server_id)
             if binding.name not in tools_local:
@@ -160,7 +160,7 @@ async def lifespan(app: FastAPI):
             )
         )
 
-        # --- Fruits API server and tools ---
+        # --- Fruits API 서버와 도구 세트 등록 ---
         fruits_server_id = "fruits_api"
         ensure_server_mounted(fruits_server_id)
         servers = registry.list_servers()
@@ -176,6 +176,7 @@ async def lifespan(app: FastAPI):
             )
 
         def ensure_fruits_tool(binding: ToolBinding) -> None:
+            # Fruits용 도구를 조건부로 upsert + FastMCP 등록
             tools_local = registry.list_tools(fruits_server_id)
             if binding.name not in tools_local:
                 registry.upsert_tool(fruits_server_id, binding.name, binding)
@@ -339,7 +340,7 @@ async def lifespan(app: FastAPI):
             )
         )
     except Exception:
-        # Fail silently; app should still boot
+        # 실패해도 앱은 계속 부팅되어야 함
         pass
 
     yield
@@ -363,6 +364,7 @@ async def healthz() -> Dict[str, Any]:
 
 @app.get("/sse/test")
 async def sse_test() -> EventSourceResponse:
+    """SSE 동작 확인용 간단한 스트림 엔드포인트."""
     async def event_generator() -> AsyncGenerator[dict, None]:
         yield {"event": "tool_call.started", "data": "sse-test"}
         for i in range(5):

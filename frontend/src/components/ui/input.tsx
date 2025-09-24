@@ -2,6 +2,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// 텍스트 입력 컴포넌트
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
