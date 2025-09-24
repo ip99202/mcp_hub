@@ -1,0 +1,11 @@
+fastapi==0.115.12
+uvicorn[standard]==0.30.6
+sse-starlette==2.1.0
+httpx==0.28.1
+pydantic==2.9.2
+pydantic-settings==2.6.1
+jsonpath-ng==1.6.1
+jsonschema==4.23.0
+
+
+fastmcp

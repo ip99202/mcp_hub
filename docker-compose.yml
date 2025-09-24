@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: mcp-hub-backend:latest
+    container_name: mcp_hub_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - UVICORN_WORKERS=2
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: mcp-hub-frontend:latest
+    container_name: mcp_hub_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "5173:80"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  default:
+    name: mcp_hub_net
+
+
