@@ -1,0 +1,42 @@
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python
+.venv/
+venv/
+**/__pycache__/
+**/*.py[cod]
+*$py.class
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+build/
+.eslintcache
+*.tsbuildinfo
+.vite/
+
+# Env / misc
+.env
+.env.*
+*.local
+.cache/
+
+# Others
+*.swp
+*.swo
