@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <style>
+      .title { font: 700 24px sans-serif; fill: #111; }
+      .text { font: 14px sans-serif; fill: #222; }
+      .muted { font: 12px sans-serif; fill: #6B7280; }
+      .actor { fill: #F8FAFC; stroke: #94A3B8; stroke-width: 2; rx: 10; }
+      .lifeline { stroke: #CBD5E1; stroke-dasharray: 6 6; }
+      .call { stroke: #2563EB; stroke-width: 2.5; marker-end: url(#arrowHead); }
+      .call2 { stroke: #0EA5E9; stroke-width: 2.5; marker-end: url(#arrowHead2); }
+      .note { fill: #FEF3C7; stroke: #F59E0B; stroke-width: 2; rx: 8; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB" />
+    </marker>
+    <marker id="arrowHead2" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0EA5E9" />
+    </marker>
+  </defs>
+
+  <text x="24" y="40" class="title">Tools Call Sequence (Detailed)</text>
+
+  <!-- Actors -->
+  <rect x="60" y="70" width="200" height="44" class="actor"/>
+  <text x="70" y="98" class="text">User/Frontend</text>
+  <line x1="160" y1="114" x2="160" y2="820" class="lifeline"/>
+
+  <rect x="300" y="70" width="220" height="44" class="actor"/>
+  <text x="310" y="98" class="text">FastAPI Backend</text>
+  <line x1="410" y1="114" x2="410" y2="820" class="lifeline"/>
+
+  <rect x="580" y="70" width="220" height="44" class="actor"/>
+  <text x="590" y="98" class="text">FastMCP Runtime</text>
+  <line x1="690" y1="114" x2="690" y2="820" class="lifeline"/>
+
+  <rect x="860" y="70" width="200" height="44" class="actor"/>
+  <text x="870" y="98" class="text">HTTP Adapter</text>
+  <line x1="960" y1="114" x2="960" y2="820" class="lifeline"/>
+
+  <rect x="1120" y="70" width="200" height="44" class="actor"/>
+  <text x="1130" y="98" class="text">External API</text>
+  <line x1="1220" y1="114" x2="1220" y2="820" class="lifeline"/>
+
+  <!-- Calls -->
+  <line x1="160" y1="170" x2="410" y2="170" class="call"/>
+  <text x="180" y="160" class="text">POST /mcp/{server}/{tool} {args}</text>
+  <text x="180" y="182" class="muted">Accept: text/event-stream</text>
+
+  <line x1="410" y1="240" x2="690" y2="240" class="call2"/>
+  <text x="430" y="230" class="text">_call_tool(server.tool, args)</text>
+  <text x="430" y="252" class="muted">등록된 경우 우선 실행</text>
+
+  <rect x="440" y="270" width="360" height="60" class="note"/>
+  <text x="450" y="295" class="text">FastMCP 예외 발생 / 미등록 시 → HTTP Adapter 폴백</text>
+
+  <!-- Fallback branch to HTTP Adapter -->
+  <line x1="410" y1="360" x2="960" y2="360" class="call2"/>
+  <text x="520" y="350" class="text">call_via_binding(Server, Tool, args)</text>
+  <text x="520" y="372" class="muted">headers/query/body 구성 + timeout 30s</text>
+
+  <line x1="960" y1="430" x2="1220" y2="430" class="call2"/>
+  <text x="980" y="420" class="text">HTTP request</text>
+  <text x="980" y="442" class="muted">json or text</text>
+
+  <line x1="1220" y1="490" x2="960" y2="490" class="call2"/>
+  <text x="1010" y="480" class="text">response</text>
+  <text x="1010" y="502" class="muted">jsonpath pick(optional)</text>
+
+  <line x1="960" y1="560" x2="410" y2="560" class="call2"/>
+  <text x="630" y="550" class="text">{ status, data }</text>
+
+  <!-- Return to UI via SSE -->
+  <line x1="410" y1="630" x2="160" y2="630" class="call"/>
+  <text x="200" y="620" class="text">SSE events</text>
+  <text x="200" y="642" class="muted">tool_call.started → output.delta → completed</text>
+
+  <!-- Notes -->
+  <rect x="160" y="690" width="1040" height="70" class="note"/>
+  <text x="170" y="715" class="text">인자 검증: JSON Schema (가능 시)</text>
+  <text x="470" y="715" class="text">세션 정규화: MessagesNormalizerASGI(session_id)</text>
+  <text x="980" y="715" class="text">에러 시: tool_call.error 이벤트</text>
+
+</svg>
+
+

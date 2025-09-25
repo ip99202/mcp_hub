@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <style>
+      .title { font: 700 24px sans-serif; fill: #111; }
+      .subtitle { font: 600 16px sans-serif; fill: #111827; }
+      .text { font: 13px sans-serif; fill: #1F2937; }
+      .muted { font: 12px sans-serif; fill: #6B7280; }
+      .box { fill: #fff; stroke: #CBD5E1; stroke-width: 2; rx: 10; }
+      .group { fill: #F8FAFC; stroke: #94A3B8; stroke-width: 2; rx: 14; }
+      .arrow { stroke: #2563EB; stroke-width: 2.5; marker-end: url(#arrowHead); }
+      .arrow2 { stroke: #0EA5E9; stroke-width: 2.5; marker-end: url(#arrowHead2); }
+      .badge { fill: #EFF6FF; stroke: #93C5FD; stroke-width: 1.5; rx: 6; }
+      .badgeText { font: 11px monospace; fill: #1E3A8A; }
+      .chip { fill: #EEF2FF; stroke: #A5B4FC; stroke-width: 1.5; rx: 6; }
+      .chipText { font: 11px monospace; fill: #3730A3; }
+    </style>
+    <marker id="arrowHead" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563EB" />
+    </marker>
+    <marker id="arrowHead2" markerWidth="10" markerHeight="10" refX="10" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0EA5E9" />
+    </marker>
+  </defs>
+
+  <text x="24" y="40" class="title">MCP Hub Architecture (Detailed)</text>
+
+  <!-- Frontend -->
+  <rect x="40" y="360" width="300" height="160" class="box"/>
+  <text x="60" y="390" class="subtitle">Frontend (React/Vite)</text>
+  <text x="60" y="415" class="text">Dashboard UI / Servers & Tools 관리</text>
+  <rect x="60" y="430" width="120" height="24" class="badge"/>
+  <text x="68" y="446" class="badgeText">/api, /mcp 프록시</text>
+  <text x="60" y="470" class="muted">개발시 vite proxy → 127.0.0.1:8000</text>
+
+  <!-- Backend Group -->
+  <rect x="380" y="80" width="960" height="700" class="group"/>
+  <text x="400" y="110" class="subtitle">Backend (FastAPI)</text>
+
+  <!-- Middlewares & Lifespan -->
+  <rect x="400" y="130" width="300" height="70" class="box"/>
+  <text x="420" y="160" class="subtitle">Lifespan</text>
+  <text x="420" y="185" class="text">기본 서버/툴 자동 등록 · 서버별 SSE 마운트</text>
+
+  <rect x="720" y="130" width="300" height="70" class="box"/>
+  <text x="740" y="160" class="subtitle">CORS Middleware</text>
+  <text x="740" y="185" class="text">allow_origins=* · headers/methods=*</text>
+
+  <!-- Routers -->
+  <rect x="400" y="220" width="260" height="90" class="box"/>
+  <text x="420" y="245" class="subtitle">routes_api.py</text>
+  <text x="420" y="268" class="text">/api/* (Servers/Tools CRUD, Stats)</text>
+
+  <rect x="680" y="220" width="260" height="90" class="box"/>
+  <text x="700" y="245" class="subtitle">routes_mcp.py</text>
+  <text x="700" y="268" class="text">/mcp/* (tools.call, base)</text>
+
+  <rect x="960" y="220" width="260" height="90" class="box"/>
+  <text x="980" y="245" class="subtitle">routes_mcp_meta.py</text>
+  <text x="980" y="268" class="text">/mcp/* (initialize, tools.list)</text>
+
+  <rect x="400" y="330" width="260" height="70" class="box"/>
+  <text x="420" y="360" class="subtitle">routes_dev.py</text>
+  <text x="420" y="385" class="text">/_dev/* (seed/test)</text>
+
+  <!-- FastMCP Apps -->
+  <rect x="680" y="330" width="260" height="100" class="box"/>
+  <text x="700" y="355" class="subtitle">/mcp-sdk</text>
+  <text x="700" y="378" class="text">Global FastMCP SSE</text>
+  <rect x="700" y="388" width="220" height="24" class="chip"/>
+  <text x="710" y="405" class="chipText">MessagesNormalizerASGI(session_id)</text>
+
+  <rect x="960" y="330" width="260" height="120" class="box"/>
+  <text x="980" y="355" class="subtitle">/mcp-servers/{server}</text>
+  <text x="980" y="378" class="text">Server-scoped FastMCP SSE</text>
+  <rect x="980" y="388" width="220" height="24" class="chip"/>
+  <text x="990" y="405" class="chipText">ensure_server_mounted()</text>
+
+  <!-- Registry & Runtime -->
+  <rect x="400" y="430" width="340" height="100" class="box"/>
+  <text x="420" y="455" class="subtitle">registry.py</text>
+  <text x="420" y="478" class="text">InMemoryRegistry (servers/tools, stats)</text>
+
+  <rect x="760" y="430" width="460" height="100" class="box"/>
+  <text x="780" y="455" class="subtitle">fastmcp_runtime.py</text>
+  <text x="780" y="478" class="text">register/deregister_tool · get_or_create_fastmcp</text>
+
+  <!-- HTTP Adapter & Models -->
+  <rect x="400" y="550" width="460" height="120" class="box"/>
+  <text x="420" y="575" class="subtitle">http_adapter.py</text>
+  <text x="420" y="598" class="text">_interpolate_path · _build_headers/query/body</text>
+  <text x="420" y="620" class="text">json/jsonpath pick → { status, headers, url, data }</text>
+
+  <rect x="880" y="550" width="340" height="120" class="box"/>
+  <text x="900" y="575" class="subtitle">models.py</text>
+  <text x="900" y="598" class="text">ServerConfig · ToolBinding · ParamMapping</text>
+  <text x="900" y="620" class="text">AuthType · ResponseMapping · HttpMethod</text>
+
+  <!-- External APIs -->
+  <rect x="760" y="690" width="460" height="70" class="box"/>
+  <text x="780" y="715" class="subtitle">External REST APIs</text>
+  <text x="780" y="738" class="text">FakeStore, Fruits API, httpbin, ipify 등</text>
+
+  <!-- Flows -->
+  <line x1="340" y1="420" x2="400" y2="265" class="arrow"/>
+  <line x1="340" y1="440" x2="680" y2="265" class="arrow"/>
+  <line x1="340" y1="460" x2="700" y2="372" class="arrow"/>
+  <line x1="340" y1="480" x2="980" y2="372" class="arrow"/>
+
+  <line x1="660" y1="265" x2="760" y2="265" class="arrow2"/>
+  <line x1="940" y1="265" x2="1080" y2="265" class="arrow2"/>
+  <line x1="660" y1="585" x2="760" y2="585" class="arrow2"/>
+  <line x1="990" y1="585" x2="990" y2="690" class="arrow2"/>
+
+  <!-- Legend -->
+  <rect x="40" y="90" width="320" height="150" class="box"/>
+  <text x="60" y="120" class="subtitle">Legend</text>
+  <text x="60" y="145" class="text">파랑: UI → Backend 요청/연결</text>
+  <text x="60" y="170" class="text">청록: Backend 내부 데이터/호출 흐름</text>
+
+</svg>
+
+
