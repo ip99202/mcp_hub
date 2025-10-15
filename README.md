@@ -192,6 +192,55 @@ curl http://localhost:8000/api/stats
 
 ---
 
+### 서버 스코프 SSE URL (실전)
+
+
+- langflow mcp 등록 예시
+  - `fakestore_api`: `http://localhost:8000/mcp-servers/fakestore_api/sse`
+  - `fruits_api`: `http://localhost:8000/mcp-servers/fruits_api/sse`
+
+참고: 메시지 전송 엔드포인트는 동일 경로의 `/messages`입니다. (예: `.../mcp-servers/fakestore_api/messages`)
+
+### 도구 호출 (SSE, HTTP 경유 cURL)
+
+등록된 툴은 `/mcp/{server}/{tool}`로 SSE 스트림을 바로 받을 수 있습니다.
+
+```bash
+# 예) fakestore_api 상품 상세 조회(get_product_by_id)
+curl -N \
+  -H 'Accept: text/event-stream' \
+  -H 'Content-Type: application/json' \
+  -d '{"args": {"id": 1}}' \
+  http://sk-axstudio.com:8000/mcp/fakestore_api/get_product_by_id
+
+# 로컬에서 동일 호출
+curl -N \
+  -H 'Accept: text/event-stream' \
+  -H 'Content-Type: application/json' \
+  -d '{"args": {"id": 1}}' \
+  http://localhost:8000/mcp/fakestore_api/get_product_by_id
+```
+
+초기화/툴 목록 조회(클라이언트 호환):
+
+```bash
+# initialize
+curl -s -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"method":"initialize"}' \
+  http://sk-axstudio.com:8000/mcp/fakestore_api | jq .
+
+# tools.list
+curl -s -X POST \
+  -H 'Content-Type: application/json' \
+  -d '{"method":"tools.list"}' \
+  http://sk-axstudio.com:8000/mcp/fakestore_api | jq .
+```
+
+노트:
+- SSE 전용 클라이언트(예: MCP SDK)는 서버 스코프 SSE URL(`.../mcp-servers/{server}/sse`)을 직접 사용해 세션을 열고, `.../messages`로 메시지를 전송합니다.
+- 일반 HTTP 기반 호출은 위의 `/mcp/{server}/{tool}` 경로로 충분합니다.
+
 ## 주요 설계 포인트
 - 바인딩 기반 호출: `ToolBinding`의 `pathTemplate`/`paramMapping`으로 안전하게 URL/헤더/쿼리/바디 구성
 - 응답 후처리: `responseMapping.pick`이 있으면 `jsonpath-ng`로 원하는 부분만 추출하여 데이터 최소화
