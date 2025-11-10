@@ -182,12 +182,3 @@
 - 호출 재시도, 회로 차단기(circuit breaker) 도입으로 외부 API 장애 대응력 향상.
 
 ---
-
-## 참고
-
-`ARCHITECTURE.md`, `backend/app/main.py`, `backend/app/routes_api.py`, `backend/app/routes_mcp.py`
-
----
-
-이 문서만 넘겨도 다른 개발자가 Redis 레지스트리로 교체하고 MCP 서버별 워커를 자동 관리하며 운영 로그를 강화해야 한다는 요구 사항을 파악하고 구현할 수 있을 것이다.
-
